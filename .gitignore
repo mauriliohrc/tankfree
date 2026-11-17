@@ -1,0 +1,32 @@
+# ─── Proprietary / copyrighted — NEVER commit (not ours to redistribute) ───
+# M-VAVE factory firmware & data
+*.fwsc
+factory_usr*.bin
+captures/factory/
+# UltraRig package (PolyForm Noncommercial, source-closed) and any derivative
+UltraRig-*/
+*_app.bin
+*_app.json
+# JieLi RAM loader / vendored flasher (users fetch these themselves)
+installer/vendor/
+wl82loader.bin
+# Flash dumps / backups (contain your pedal's UNIQUE BT identity — never share)
+backups/
+*dump*.bin
+flashdump*/
+chip_key*.bin
+
+# ─── Build / scratch ───
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+sdk.elf
+sdk.map
+*.plain
+*.enc
+.DS_Store
+/scratch/

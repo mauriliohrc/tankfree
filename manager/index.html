@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenTank-G — Manager</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header>
+  <h1>OpenTank-G <small>manager</small></h1>
+  <div class="conn">
+    <span id="dot" class="dot off"></span>
+    <button id="btnConnect">Conectar (USB)</button>
+    <label><input type="checkbox" id="chkMidi"> MIDI GP-5</label>
+    <select id="rate" title="Sample rate">
+      <option value="48000">48 kHz</option>
+      <option value="96000">96 kHz</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <section id="presets"><h2>Presets</h2><ul id="presetList"><li class="muted">—</li></ul></section>
+  <section id="chainWrap">
+    <h2>Cadeia (livre)</h2>
+    <div id="chain" class="chain"><p class="muted">Conecte o pedal para carregar a cadeia.</p></div>
+  </section>
+  <aside id="side">
+    <div class="panel"><h3>Amp</h3><div id="ampPanel" class="muted">—</div></div>
+    <div class="panel"><h3>Cab / IR</h3><div id="irPanel" class="muted">—</div></div>
+    <div class="panel"><h3>Log</h3><pre id="log"></pre></div>
+  </aside>
+</main>
+
+<script type="module">
+import { TankLink } from "./js/protocol.js";
+import { Gp5Midi } from "./js/midi.js";
+
+const $ = (id) => document.getElementById(id);
+const log = (m) => { $("log").textContent = (new Date().toLocaleTimeString() + "  " + m + "\n" + $("log").textContent).slice(0, 4000); };
+const link = new TankLink();
+let midi = null;
+
+link.onEvent = (line) => log("« " + line);
+
+$("btnConnect").onclick = async () => {
+  if (link.connected) { await link.disconnect(); setConn(false); return; }
+  try {
+    await link.connect();
+    setConn(true);
+    log("conectado");
+    await refreshPresets();
+    await refreshChain();
+  } catch (e) { log("erro: " + e.message); }
+};
+
+$("chkMidi").onchange = async (e) => {
+  if (e.target.checked) {
+    try { midi = await new Gp5Midi(link).start(); midi.onAction = (cc, v, a) => log(`MIDI CC${cc}=${v} → ${a.join(" ")}`); log("MIDI GP-5 ativo"); }
+    catch (err) { log("MIDI indisponível: " + err.message); e.target.checked = false; }
+  }
+};
+
+$("rate").onchange = (e) => { if (link.connected) link.send(`AUDIORATE ${e.target.value}`).then(() => log("rate " + e.target.value)).catch((x) => log(x.message)); };
+
+function setConn(on) {
+  link.connected = on || link.connected;
+  $("dot").className = "dot " + (on ? "on" : "off");
+  $("btnConnect").textContent = on ? "Desconectar" : "Conectar (USB)";
+}
+
+async function refreshPresets() {
+  try {
+    const lines = await link.presets();
+    const items = lines.filter((l) => l && l !== "OK" && !l.startsWith("ERR"));
+    $("presetList").innerHTML = items.map((l, i) => `<li data-n="${i}">${l}</li>`).join("") || "<li class='muted'>vazio</li>";
+    $("presetList").querySelectorAll("li[data-n]").forEach((li) =>
+      li.onclick = () => link.loadPreset(li.dataset.n).then(() => log("preset " + li.dataset.n)).catch((e) => log(e.message)));
+  } catch (e) { log("PLIST: " + e.message); }
+}
+
+async function refreshChain() {
+  try {
+    const fx = await link.chain();
+    $("chain").innerHTML = fx.filter((l) => l && l !== "OK").map((l) => `<div class="block">${l}</div>`).join("") || "<p class='muted'>cadeia vazia</p>";
+  } catch (e) { log("FXS: " + e.message); }
+}
+
+// Reconnect to already-granted ports.
+navigator.serial?.addEventListener?.("connect", (e) => log("porta disponível"));
+</script>
+</body>
+</html>
