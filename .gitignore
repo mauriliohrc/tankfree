@@ -43,3 +43,5 @@ sdk.map
 firmware/build/.toolchain/
 firmware/build/obj/
 firmware/.toolchain/
+!firmware/build/*.sh
+!firmware/build/*.md
