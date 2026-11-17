@@ -3,7 +3,7 @@
 Read this before using anything here.
 
 ## Not affiliated
-OpenTank-G is an independent, community project. It is **not** made, endorsed,
+TankFree is an independent, community project. It is **not** made, endorsed,
 supported by, or affiliated with **M-VAVE**, **MOOER**, **Zhuhai Jieli
 Technology**, **Valeton**, or any other company. All product and company names,
 trademarks and logos (M-VAVE, Tank-G, Tank-B, Valeton, GP-5, JieLi, AC791N, NAM,

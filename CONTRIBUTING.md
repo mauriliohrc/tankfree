@@ -1,4 +1,4 @@
-# Contributing to OpenTank-G
+# Contributing to TankFree
 
 Thanks for helping! A few ground rules keep this project legally clean and safe.
 

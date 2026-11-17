@@ -1,11 +1,11 @@
 <div align="center">
 
-# OpenTank-G
+# TankFree
 
 **An open, community firmware & toolkit for the M-VAVE Tank-G / Tank-B v2 guitar pedal**
 *(SoC: JieLi AC791N · CPU pi32v2)*
 
-[![CI](https://github.com/OWNER/opentank/actions/workflows/ci.yml/badge.svg)](../../actions)
+[![CI](https://github.com/mauriliohrc/tankfree/actions/workflows/ci.yml/badge.svg)](../../actions)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![status: alpha](https://img.shields.io/badge/status-early%20alpha-orange)
 
@@ -15,7 +15,7 @@
 > Installing custom firmware can brick your pedal and voids its warranty. Use at
 > your own risk, on hardware you own. Read [`DISCLAIMER.md`](DISCLAIMER.md).
 
-OpenTank-G aims to replicate (and extend) the original Tank-G tones with a
+TankFree aims to replicate (and extend) the original Tank-G tones with a
 clean-room open firmware, plus the tooling you need to live with it: a flasher
 and a browser-based editor.
 

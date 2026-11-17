@@ -1,4 +1,4 @@
-# OpenTank-G Firmware (pi32v2 app)
+# TankFree Firmware (pi32v2 app)
 
 The on-pedal application. Built as a JieLi AC79/WL82 SDK app, like UltraRig.
 **Skeleton** — building this needs the pi32v2 toolchain and the physical pedal.

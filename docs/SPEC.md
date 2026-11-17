@@ -1,4 +1,4 @@
-# OpenTank-G — Firmware Specification
+# TankFree — Firmware Specification
 
 Living spec. Decisions marked ✅; open items marked ❓.
 
@@ -28,19 +28,35 @@ Living spec. Decisions marked ✅; open items marked ❓.
 - ✅ **No fixed max blocks** — bounded only by the runtime CPU/MEM budget (meters
   enforce, like the original). Data structure ceiling generous (e.g. 32 slots);
   no artificial 16-block cap.
-- ❓ Exact block list. Proposed baseline (clean-room):
-  gate, compressor, boost, overdrive, distortion, fuzz, EQ (graphic+param),
-  hum/noise filter, chorus, flanger, phaser, vibrato, tremolo, rotary,
-  pitch, pitch-pro, doubler, delay (tempo-sync), reverbs (room/plate/spring/hall/
-  shimmer/spectral), amp (NAM), cab (IR).
+- ✅ **Goal: the most complete catalog possible** (drives/dist/fuzz, dynamics,
+  EQ/filter, modulation, pitch, delay, reverb) — full taxonomy + open-source
+  mapping in [`BLOCK_CATALOG.md`](BLOCK_CATALOG.md). Library is large; simultaneous
+  use bounded by CPU/MEM meters. Reuse GPL suites (Guitarix, BYOD/chowdsp) +
+  FAUST (compiles to embeddable C) + mda/Airwindows (permissive).
 
-## Amps
+## Amps — two engines
+### A. Capture engine (data-driven)
 - ✅ **NAM A2-Lite** capture engine (clean-room from NAM/MIT + decoded A2L1 format).
-- ✅ Ship the **factory Tank-G captures** converted to our format (RAT, Marshall-style,
-  JCM900, Slash, etc. — already extracted, §4 of RE_FINDINGS) so the "original"
-  tones are available.
-- ✅ **2–3 algorithmic amps** (clean/crunch/high-gain) for players who don't want captures.
+- ✅ Ship the **factory Tank-G captures** (RAT, Marshall-style, JCM900, Slash… —
+  already extracted, §4 of RE_FINDINGS) so the "original" tones stay available.
 - ❓ Capture slots (UltraRig = 15). Proposed: 15+.
+
+### B. Algorithmic (parametric / circuit-modeled) amp engine — PRIMARY GOAL
+- ✅ **One parametric amp engine + a table of amp definitions.** Each "amp" is a
+  parameter set (tone-stack values, gain-stage curves, presence/NFB, power-amp
+  voicing), not separate code. Knobs behave like the real circuit, unlike captures.
+- ✅ Signal path: input → preamp gain/triode stages (oversampled nonlinearity) →
+  **tone stack (Bass/Mid/Treble)** → presence/NFB → power-amp → master → cab(IR).
+- ✅ **Collection of the world's most-used amps** as definitions (generic names for
+  trademark safety): Tweed/Bassman, Blackface (Fender), Plexi/Brit-800/900
+  (Marshall), AC30 (Vox), Rectifier/Mark (Mesa), SLO (Soldano), 5150 (Peavey),
+  JC-120 (Roland), etc. Tone-stack component values are public (Duncan calculator).
+- ✅ **Reuse open GPL code** (firmware is GPL-3.0): port from **Guitarix** (many
+  classic amp models in Faust), **BYOD/chowdsp** (WDF circuit models),
+  **chowdsp_wdf** (BSD), **FAUST** (compiles tone stack + gain stages to embeddable C).
+- ✅ Math refs: Yeh CCRMA thesis (tone stack + triode + diode), Dempwolf/Koren
+  triode models, DAFX. Each amp ≈ 2–4 biquads + 2–3 nonlinear stages → few % CPU.
+- ⚠️ Trademark-safe naming; model behavior/circuit, not brand names/logos.
 
 ## Cabs / IR
 - ✅ IR convolution, 48 kHz, accelerator-offloaded.

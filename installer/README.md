@@ -1,4 +1,4 @@
-# OpenTank-G Installer
+# TankFree Installer
 
 Cross-platform (Python 3) tooling to decrypt, build and flash Tank-G firmware.
 

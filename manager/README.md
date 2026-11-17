@@ -1,4 +1,4 @@
-# OpenTank-G Manager (web editor)
+# TankFree Manager (web editor)
 
 Browser editor that talks to the pedal over **Web Serial** (USB) with
 **Web MIDI** (GP-5 map) and **Web Bluetooth** (BLE) planned. Chrome/Edge only.
