@@ -21,10 +21,13 @@ Apache-2.0 and the open toolchain are compatible with our GPL-3 firmware. We
 build on them clean-room: reuse the USB/boot plumbing, write our own DSP/UI.
 
 ## Build host
-**Windows (or Linux/WSL).** Not macOS: the JieLi toolchain ships as `clang.exe`
+**Linux or Windows.** Not macOS: the JieLi toolchain ships as `clang.exe`
 (`C:/JL/pi32/bin`), and the open `pi32v2-llvm` has no prebuilt mac image. Needs
 Python 3.11, Git, CMake, and the pi32v2 toolchain (JieLi's free download, or
 build `pi32v2-llvm`). Set `FM1_SDK_DIR` and `FM1_TOOLCHAIN_DIR`.
+
+> **On a Mac (no Windows):** run the build **and** the flashing in a free **Linux
+> VM with USB passthrough** (UTM/Lima). Full setup: [`../docs/FLASHING_ON_MAC.md`](../docs/FLASHING_ON_MAC.md).
 
 ## Milestones (each flashed with a factory backup ready to restore)
 0. **Factory backup first (MANDATORY).** Loader mode (power-cycle 3× → `WL82 UBOOT`)
