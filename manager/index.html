@@ -706,7 +706,7 @@ async function connect(){
   if(connected){toast('Já conectado');return;}
   if(!('serial' in navigator)){ demoConnect(); return; }
   try{
-    port=await navigator.serial.requestPort({filters:[{usbVendorId:0x3654}]});
+    port=await navigator.serial.requestPort();   // mostra todas as portas; escolha a usbmodem do pedal
     await port.open({baudRate:115200});
     writer=port.writable.getWriter(); reader=port.readable.getReader();
     devMode="usb"; readLoop();
