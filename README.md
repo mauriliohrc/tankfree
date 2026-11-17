@@ -19,12 +19,28 @@ TankFree aims to replicate (and extend) the original Tank-G tones with a
 clean-room open firmware, plus the tooling you need to live with it: a flasher
 and a browser-based editor.
 
+## The editor
+
+<p align="center"><img src="docs/img/hero.png" alt="TankFree rig editor: signal chain, amp face with real knobs, and footswitches" width="100%"></p>
+
+A browser editor (Chrome/Edge — Web Serial + Web MIDI + BLE). A Quad Cortex-style
+**signal grid** with parallel lanes on top; ToneX-style **per-block realism** below
+— every amp and pedal is drawn like the real thing, with knobs that behave like the
+circuit. Drag blocks to reorder, dial in a tone, map the footswitches.
+
+| Every block drawn for real | Built-in tuner |
+|:--:|:--:|
+| <img src="docs/img/pedal.png" alt="A TS-style overdrive pedal rendered with working knobs" width="100%"> | <img src="docs/img/tuner.png" alt="Chromatic tuner overlay" width="100%"> |
+
+> Try it now — no pedal needed: `cd manager && python3 -m http.server 8000`, open
+> <http://localhost:8000> in Chrome/Edge. It runs in demo mode until a pedal is connected.
+
 ## What's inside
 
 | Folder | What it is | Status |
 |---|---|---|
 | [`installer/`](installer/) | Python flasher + offline firmware tools (decrypt/encrypt/extract). Validated JieLi crypto. | crypto ✅ · flashing 🚧 |
-| [`manager/`](manager/) | Web editor — Web Serial + Web MIDI (Valeton **GP-5**-style map) + BLE. Free effects chain, presets, captures, IRs. | scaffold 🚧 |
+| [`manager/`](manager/) | Web editor — Web Serial + Web MIDI (Valeton **GP-5**-style map) + BLE. QC-style grid, ToneX-style block art, presets, captures, IRs. | editor ✅ · live data 🚧 |
 | [`firmware/`](firmware/) | The on-pedal app (pi32v2, JieLi AC79 SDK). | skeleton 🧪 |
 | [`docs/`](docs/) | Reverse-engineering notes, firmware spec, GP-5 MIDI map. | ✅ |
 
