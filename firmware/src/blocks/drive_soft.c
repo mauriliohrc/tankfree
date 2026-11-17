@@ -3,7 +3,7 @@
  */
 #include "../block.h"
 #include "../dsp/biquad.h"
-#include <math.h>
+#include "../dsp/tf_math.h"
 
 typedef struct { tf_biquad tone; float drive, level, fs; } drv_state;
 
@@ -23,9 +23,9 @@ static void drv_setp(tf_block *b, int i, float v) { b->p[i].value = v; drv_apply
 
 static void drv_process(tf_block *b, float *l, float *r, int n) {
     drv_state *s = b->state;
-    float g = s->drive, inv = 1.0f / sqrtf(g);
+    float g = s->drive, inv = 1.0f / TF_SQRT(g);
     for (int i = 0; i < n; i++) {
-        float x = tanhf(l[i] * g) * inv;      /* soft clip, loudness-compensated */
+        float x = TF_TANH(l[i] * g) * inv;      /* soft clip, loudness-compensated */
         x = tf_biquad_tick(&s->tone, x) * s->level;
         l[i] = r[i] = x;
     }

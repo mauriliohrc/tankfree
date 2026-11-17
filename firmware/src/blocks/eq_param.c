@@ -15,7 +15,7 @@ static const tf_param EQ_PARAMS[] = {
 };
 
 static float db(float v01)  { return (v01 - 0.5f) * 24.0f; }           /* -12..+12 */
-static float mf(float v01)  { return 300.0f * powf(10.0f, v01 * 1.0f); } /* 300..3000 */
+static float mf(float v01)  { return 300.0f * TF_POW(10.0f, v01 * 1.0f); } /* 300..3000 */
 
 static void eq_recalc(tf_block *b) {
     eq_state *s = b->state;

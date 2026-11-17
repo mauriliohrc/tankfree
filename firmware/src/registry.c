@@ -2,7 +2,7 @@
  * engine and the editor look them up by id.
  */
 #include "block.h"
-#include <string.h>
+#include "tf_str.h"
 
 #define TF_MAX_TYPES 128
 static const tf_block_desc *g_types[TF_MAX_TYPES];

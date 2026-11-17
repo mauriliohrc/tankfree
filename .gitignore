@@ -38,3 +38,8 @@ sdk.map
 *.enc
 .DS_Store
 /scratch/
+
+# firmware build
+firmware/build/.toolchain/
+firmware/build/obj/
+firmware/.toolchain/

@@ -24,3 +24,7 @@ jobs:
           /tmp/host_test
           cc -Ifirmware/src -O2 -Wall firmware/test/proto_test.c firmware/src/proto.c $BLOCKS -lm -o /tmp/proto_test
           /tmp/proto_test
+          cc -Ifirmware/src -O2 firmware/test/midi_mvave_test.c firmware/src/midi_mvave.c -o /tmp/midi_test
+          /tmp/midi_test
+      - name: Cross-compile firmware for pi32v2 (AC791N)
+        run: bash firmware/build/compile_check.sh

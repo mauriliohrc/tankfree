@@ -4,7 +4,7 @@
  */
 #ifndef TF_BIQUAD_H
 #define TF_BIQUAD_H
-#include <math.h>
+#include "tf_math.h"
 
 typedef struct { float b0, b1, b2, a1, a2; float z1, z2; } tf_biquad;
 
@@ -18,18 +18,18 @@ static inline float tf_biquad_tick(tf_biquad *s, float x) {
 /* kind: 0=peaking, 1=lowshelf, 2=highshelf, 3=lowpass, 4=highpass, 5=notch */
 static inline void tf_biquad_set(tf_biquad *s, int kind, float fs, float f0,
                                  float Q, float gain_db) {
-    float A  = powf(10.0f, gain_db / 40.0f);
+    float A  = TF_POW(10.0f, gain_db / 40.0f);
     float w0 = 2.0f * (float)M_PI * f0 / fs;
-    float cw = cosf(w0), sw = sinf(w0);
+    float cw = TF_COS(w0), sw = TF_SIN(w0);
     float alpha = sw / (2.0f * Q);
     float b0, b1, b2, a0, a1, a2;
     switch (kind) {
     case 1: { /* lowshelf */
-        float s2 = 2.0f * sqrtf(A) * alpha;
+        float s2 = 2.0f * TF_SQRT(A) * alpha;
         b0 = A*((A+1)-(A-1)*cw + s2); b1 = 2*A*((A-1)-(A+1)*cw); b2 = A*((A+1)-(A-1)*cw - s2);
         a0 = (A+1)+(A-1)*cw + s2;     a1 = -2*((A-1)+(A+1)*cw);  a2 = (A+1)+(A-1)*cw - s2; } break;
     case 2: { /* highshelf */
-        float s2 = 2.0f * sqrtf(A) * alpha;
+        float s2 = 2.0f * TF_SQRT(A) * alpha;
         b0 = A*((A+1)+(A-1)*cw + s2); b1 = -2*A*((A-1)+(A+1)*cw); b2 = A*((A+1)+(A-1)*cw - s2);
         a0 = (A+1)-(A-1)*cw + s2;     a1 = 2*((A-1)-(A+1)*cw);    a2 = (A+1)-(A-1)*cw - s2; } break;
     case 3: /* lowpass */

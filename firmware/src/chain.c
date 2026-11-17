@@ -2,7 +2,7 @@
  * Skeleton: block alloc uses a static pool here; swap for the SDK allocator.
  */
 #include "chain.h"
-#include <string.h>
+#include "tf_str.h"
 
 uint16_t TF_CPU_BUDGET = 1000;     /* relative units; set at boot from clock */
 uint32_t TF_MEM_BUDGET = 512 * 1024;
