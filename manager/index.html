@@ -651,7 +651,16 @@ $('picker').onclick=e=>{if(e.target.id==='picker')e.currentTarget.classList.remo
 /* ============================ PRESET + SETTINGS DRAWERS ============================ */
 function renderPresetDrawer(){
   const host=$('plist');host.innerHTML='';
-  PRESETS.forEach((p,i)=>{
+  if(DEVICE_PRESETS){                       // real pedal
+    DEVICE_PRESETS.forEach(p=>{
+      const c=el('button','pcard');c.style.setProperty('--pc',p.color);
+      c.innerHTML=`<div class="sw"></div><div><b>${p.name||('Preset '+(p.idx+1))}</b><span>${String(p.idx+1).padStart(2,'0')} · do pedal</span></div>`;
+      c.onclick=()=>{send(`PLOAD ${p.idx}`);$('pTitle').textContent=p.name;$('pSub').textContent=String(p.idx+1).padStart(2,'0')+' · do pedal';closeDrawers();toast('Preset '+p.name);};
+      host.appendChild(c);
+    });
+    return;
+  }
+  PRESETS.forEach((p,i)=>{                   // demo
     const c=el('button','pcard '+(i===presetIdx?'on':''));c.style.setProperty('--pc',p.color);
     c.innerHTML=`<div class="sw"></div><div><b>${p.name}</b><span>${String(i+1).padStart(2,'0')} · ${AMPS[p.ampSel].name} · ${p.by}</span></div>`;
     c.onclick=()=>{loadPreset(i);closeDrawers();};host.appendChild(c);
@@ -691,20 +700,58 @@ function openTuner(){
 function closeTuner(){$('tuner').classList.remove('show');clearInterval(tuneTimer);send('TUNER 0');}
 
 /* ============================ CONNECTION (real Web Serial + demo) ============================ */
-let port,writer;
+let port,writer,reader,devMode="demo",_rx="",_waiters=[];
+let DEVICE_PRESETS=null,DEVICE_CAPS=[],DEVICE_IRS=[];
 async function connect(){
   if(connected){toast('Já conectado');return;}
   if(!('serial' in navigator)){ demoConnect(); return; }
   try{
     port=await navigator.serial.requestPort({filters:[{usbVendorId:0x3654}]});
     await port.open({baudRate:115200});
-    writer=port.writable.getWriter();
-    setConn(true,'USB'); toast('Pedal conectado');
-  }catch(e){ toast('Conexão cancelada — seguindo em modo demo'); demoConnect(); }
+    writer=port.writable.getWriter(); reader=port.readable.getReader();
+    devMode="usb"; readLoop();
+    const v=await ask("PING","PONG",1500);
+    const ver=(v.find(x=>x.startsWith("PONG"))||"PONG").replace("PONG ","");
+    setConn(true, (ver.split(" ")[0]||"USB")); toast("Pedal: "+ver);
+    await syncDevice();
+  }catch(e){ toast('Sem pedal — modo demo'); demoConnect(); }
 }
-function demoConnect(){setConn(true,'Demo');toast('Modo demo (sem pedal) — tudo navegável');}
+async function readLoop(){
+  const dec=new TextDecoder();
+  try{ while(true){ const {value,done}=await reader.read(); if(done)break;
+    _rx+=dec.decode(value,{stream:true}); let nl;
+    while((nl=_rx.indexOf("\n"))>=0){ const line=_rx.slice(0,nl).replace(/\r$/,""); _rx=_rx.slice(nl+1);
+      for(const w of _waiters) w.lines.push(line);
+      _waiters=_waiters.filter(w=>{ if(line==="OK"||line.startsWith("ERR")||(w.until&&line.startsWith(w.until))){clearTimeout(w.t);w.res(w.lines);return false;} return true; });
+    } } }catch(e){}
+}
+function ask(cmd,until=null,ms=1500){
+  if(devMode!=="usb"||!writer) return Promise.resolve([]);
+  return new Promise(res=>{ const w={until,lines:[],res,t:setTimeout(()=>{_waiters=_waiters.filter(x=>x!==w);res(w.lines);},ms)};
+    _waiters.push(w); writer.write(new TextEncoder().encode(cmd+"\n")); });
+}
+function demoConnect(){devMode="demo";setConn(true,'Demo');toast('Modo demo (sem pedal) — tudo navegável');}
 function setConn(on,label){connected=on;$('connBtn').classList.toggle('live',on);$('connTxt').textContent=on?label:'Conectar';}
-async function send(line){ if(!writer)return; try{await writer.write(new TextEncoder().encode(line+'\n'));}catch{} }
+async function send(line){ if(devMode!=="usb"||!writer)return; try{await writer.write(new TextEncoder().encode(line+'\n'));}catch{} }
+/* read real presets/captures/IRs and show them (read-only) */
+async function syncDevice(){
+  try{
+    const pl=_parsePRE(await ask("PLIST",null,1400));
+    if(pl.length){ DEVICE_PRESETS=pl; renderPresetDrawer(); toast(pl.length+" presets lidos do pedal"); }
+    DEVICE_CAPS=_parseTag(await ask("CLIST",null,1400),"CAP");
+    DEVICE_IRS=_parseTag(await ask("ILIST",null,1400),"IRS");
+  }catch(e){}
+}
+function _parsePRE(ls){const o=[];for(const l of ls){const m=l.match(/^PRE\s+(\d+)\b.*?'([^']*)'.*?(?:col=([0-9a-fA-F]{6}))?\s*$/);if(m)o.push({idx:+m[1],name:m[2],color:m[3]?'#'+m[3]:'#e6a648'});}return o;}
+function _parseTag(ls,t){const o=[];for(const l of ls){const m=l.match(new RegExp("^"+t+"\\s+(\\d+)\\s+(\\d+)\\s+'([^']*)'"));if(m)o.push({idx:+m[1],size:+m[2],name:m[3]});}return o;}
+async function _deviceMeters(){
+  const st=await ask("STAT",null,700), mm=await ask("MEM",null,700);
+  const find=(a,re)=>{for(const l of a){const m=l.match(re);if(m)return m;}return null;};
+  let cpu=null,mem=null;
+  const blk=find(st,/\bblk=(\d+)\/(\d+)/); if(blk)cpu=Math.min(99,Math.round(100*+blk[1]/+blk[2]));
+  const pu=find(mm,/\bpool_used=(\d+)/),po=find(mm,/\bpool=(\d+)/); if(pu&&po)mem=Math.min(99,Math.round(100*+pu[1]/+po[1]));
+  return {cpu,mem};
+}
 
 /* ============================ WIRE-UP ============================ */
 function openDrawer(d){$('scrim').classList.add('show');$(d).classList.add('show');}
@@ -718,13 +765,15 @@ $('connBtn').onclick=connect;
 $('tunerBtn').onclick=openTuner;$('tClose').onclick=closeTuner;
 $('onboardOk').onclick=()=>$('onboard').style.display='none';
 
-// live-ish meters (demo)
+// live meters — real device when connected, demo otherwise
 if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
-  setInterval(()=>{
-    const used=chainCost();
-    $('cpuFill').style.width=used.cpu+'%';$('cpuPct').textContent=used.cpu+'%';
-    $('memFill').style.width=used.mem+'%';$('memPct').textContent=used.mem+'%';
-  },700);
+  setInterval(async ()=>{
+    let cpu,mem;
+    if(devMode==="usb"){ const m=await _deviceMeters(); cpu=m.cpu; mem=m.mem; }
+    if(cpu==null){ const u=chainCost(); cpu=u.cpu; mem=u.mem; }
+    $('cpuFill').style.width=cpu+'%';$('cpuPct').textContent=cpu+'%';
+    $('memFill').style.width=mem+'%';$('memPct').textContent=mem+'%';
+  },900);
 }
 function chainCost(){const n=(chain.A?.length||0)+(chain.B?.length||0);return{cpu:Math.min(99,18+n*9),mem:Math.min(99,12+n*7)};}
 

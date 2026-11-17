@@ -82,15 +82,50 @@ export class TankLink {
   }
 
   // --- high-level helpers (thin wrappers over the line protocol) ---
-  presets()            { return this.send("PLIST"); }
   loadPreset(n)        { return this.send(`PLOAD ${n}`); }
   savePreset(n, name)  { return this.send(`PSAVE ${n} ${name ?? ""}`.trim()); }
   chain()              { return this.send("FXS"); }               // effects snapshot
   blockEnable(i, on)   { return this.send(`FXE ${i} ${on ? 1 : 0}`); }
   amp(params)          { return this.send(`AMPEQ ${params}`); }   // volume=.. bass=.. ...
   gain(inDb, outDb)    { return this.send(`GAIN ${inDb} ${outDb}`); }
-  captures()           { return this.send("CLIST"); }
-  irs()                { return this.send("ILIST"); }
   tuner(on)            { return this.send(`TUNER ${on ? 1 : 0}`); }
   audio(mode)          { return this.send(`AUDIO ${mode}`); }     // OFF|THRU|A2L
+
+  // --- real-device readers (parse the firmware's actual reply formats) ---
+  async version()  { const l = await this.send("PING", { until: "PONG" }); return (l.find(x => x.startsWith("PONG")) || "").replace("PONG ", ""); }
+  async presets()  { return parsePresets(await this.send("PLIST")); }
+  async captures() { return parseList(await this.send("CLIST"), "CAP"); }
+  async irs()      { return parseList(await this.send("ILIST"), "IRS"); }
+  async meters()   { return parseMeters(await this.send("MEM"), await this.send("STAT")); }
+}
+
+// PLIST → "PRE <idx> <a> <b> <c> 'Name' t=.. s=.. col=rrggbb" + "PLIST end current=N"
+export function parsePresets(lines) {
+  const out = [];
+  for (const l of lines) {
+    const m = l.match(/^PRE\s+(\d+)\b.*?'([^']*)'.*?(?:col=([0-9a-fA-F]{6}))?\s*$/);
+    if (m) out.push({ idx: +m[1], name: m[2], color: m[3] ? "#" + m[3] : "#e6a648" });
+  }
+  return out;
+}
+// CLIST/ILIST → "<TAG> <idx> <size> 'Name' ..." + "<...> end ... slots=N"
+export function parseList(lines, tag) {
+  const out = [];
+  for (const l of lines) {
+    const m = l.match(new RegExp("^" + tag + "\\s+(\\d+)\\s+(\\d+)\\s+'([^']*)'(.*)$"));
+    if (m) out.push({ idx: +m[1], size: +m[2], name: m[3], info: m[4].trim() });
+    const e = l.match(/slots=(\d+)/); if (e) out._slots = +e[1];
+  }
+  return out;
+}
+// MEM + STAT → { cpuPct, memPct } from real figures.
+export function parseMeters(memLines, statLines) {
+  const g = (arr, re) => { for (const l of arr) { const m = l.match(re); if (m) return m; } return null; };
+  let cpu = 0, mem = 0;
+  const blk = g(statLines, /\bblk=(\d+)\/(\d+)/);        // used/budget ticks per block
+  if (blk) cpu = Math.min(100, Math.round(100 * +blk[1] / +blk[2]));
+  const pool = g(memLines, /\bpool_used=(\d+).*?\bpool=(\d+)/) || g(memLines, /\bpool=(\d+).*?pool_used=(\d+)/);
+  const poolM = g(memLines, /\bpool=(\d+)/), usedM = g(memLines, /\bpool_used=(\d+)/);
+  if (poolM && usedM) mem = Math.min(100, Math.round(100 * +usedM[1] / +poolM[1]));
+  return { cpuPct: cpu, memPct: mem };
 }
