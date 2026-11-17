@@ -134,6 +134,27 @@ parser (already decompiled under `scratchpad/installer_extract/pyz/`) to extract
 the factory app precisely. Not required to build our own firmware — the factory
 tones (§4) are already open.
 
+## 9b. Live device readout (confirmed on real hardware, 2026-11-17)
+
+Queried a real Tank-G v2 running UltraRig M5.71 over USB serial (`installer/probe.py`,
+read-only). Confirms our RE end-to-end:
+
+- **Firmware:** `PONG tankg_fw M5.71 rel ble Nov 12 2026 16:04:11` — matches the
+  decrypted build byte-for-byte.
+- **NAM engine (STAT/DSP):** `L=23 C=3 rf=6347` — **23 WaveNet layers, 3 channels,
+  receptive field 6347 samples (~132 ms @48k)**. Exactly the A2-Lite `A2L1` format (§7).
+  Also: `c1_ok=1` (accelerator path up), per-block timing avg ≈ 125k ticks, block ≈ 89.8k.
+- **Memory budget (MEM), real figures to design to:**
+  - heap ≈ 287 KB, largest free chunk ≈ 9.7 KB, free ≈ 98 KB
+  - **effects arena ≈ 118 KB** (`arena=118688`), FX pool ≈ 98 KB (`pool=98304`),
+    `fxcap` ≈ 108 KB, `ram0_code_data` ≈ 129 KB, `ram0_bss` ≈ 95 KB
+  - → our firmware's simultaneous-effects memory is bounded by a ~**118 KB arena**,
+    not the 512 KB host-test placeholder.
+- **Storage:** `CLIST slots=15`, `ILIST slots=8` — 15 captures, 8 IRs confirmed.
+- **Audio levels:** `pk_in=-45.2 pk_out=-71.8 dBFS`, no clipping.
+- **BLE:** advertising as `UltraRig <hex>`, one unique MAC per unit (kept off-repo).
+- Protocol commands `PING INFO MEM BLE STAT PLIST CLIST ILIST` all answer as mapped (§6).
+
 ## 9. Toolchain & SDK (for building firmware)
 
 - SDK: `gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK` (Apache-2.0, our chip family) +

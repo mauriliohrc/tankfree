@@ -76,9 +76,13 @@ Living spec. Decisions marked ✅; open items marked ❓.
 - ✅ USB: Web-Serial control (editor) + USB-MIDI (GP-5 map). ❓ USB audio? (UltraRig dropped it.)
 - ✅ BLE: control app + BLE-MIDI.
 
-## Flash budget
+## Flash & RAM budget
 - App area `[0x4000, 0x7B000)` = 487 KB for code+data. Presets/captures/IR in VM +
   user area. Must fit the 1 MiB flash with factory unique areas untouched.
+- **RAM (measured live on a real pedal, 2026-11-17 — see RE_FINDINGS §9b):**
+  effects arena ≈ **118 KB**, FX pool ≈ 98 KB, code+data ≈ 129 KB, bss ≈ 95 KB.
+  Our simultaneous-effects memory is bounded by the ~118 KB arena — the chain
+  engine's CPU/MEM meters enforce against this, not the host-test placeholder.
 
 ## Open decisions to close next
 1. Block list + max per preset. 2. Preset/scene/capture/IR counts.
