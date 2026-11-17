@@ -36,8 +36,13 @@ Where the project is and what's left. ✅ done · 🚧 in progress · ⬜ to do.
 - [ ] BLE transport (Web Bluetooth)
 
 ## Phase 3 — Our firmware (the big track) ⬜
-- [ ] Set up JieLi **AC79 SDK** + **pi32v2 toolchain**
-- [ ] Minimal booting firmware: USB-CDC `PING→PONG` (proves toolchain + flash + boot)
+> Proven base found: `Keitark/fm1-nes` (Apache-2.0, same chip) has `usb-diag`
+> (CDC+UBOOT, done) and `--usb-audio` (UAC1); open `pi32v2-llvm` toolchain builds
+> from source. Build on **Windows/Linux**. Full plan: **[`firmware/BUILD.md`](firmware/BUILD.md)**.
+- [ ] **Factory backup first** (loader mode + jl-uboot-tool, Win/Linux) — safety net
+- [ ] Set up AC79 SDK + pi32v2 toolchain (Windows/Linux)
+- [ ] Flash **usb-diag** (CDC + return-to-UBOOT) to the Tank-G — proves the pipeline
+- [ ] **usb-audio** profile → adapt FM-1 audio path to the Tank-G codec/pins (native soundcard)
 - [ ] Audio passthrough (codec in→out, 48 kHz / 24-bit)
 - [x] Free-chain block engine skeleton (compiles + host test in CI)
 - [ ] NAM **A2-Lite** fixed-point runner (clean-room) + IR convolution on the accelerator

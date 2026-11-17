@@ -3,6 +3,11 @@
 The on-pedal application. Built as a JieLi AC79/WL82 SDK app, like UltraRig.
 **Skeleton** — building this needs the pi32v2 toolchain and the physical pedal.
 
+> **The concrete, followable build path is in [`BUILD.md`](BUILD.md)** — it adopts
+> the proven FM-1 base (`Keitark/fm1-nes`, Apache-2.0; `usb-diag` + `usb-audio`
+> profiles for our exact chip) and the open `pi32v2-llvm` toolchain. Build on
+> **Windows/Linux**, flash only after a **factory backup**. Start reading there.
+
 ## Toolchain
 - SDK: `git clone https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK` (Apache-2.0) +
   `Jieli-Tech/fw-Bootloader` (target `wl82`).
