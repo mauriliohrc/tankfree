@@ -9,7 +9,7 @@ CLANG="$BIN/clang-23"; [ -x "$CLANG" ] || CLANG="$BIN/clang"
 FLAGS="--target=pi32v2 -O2 -ffreestanding -DTF_EMBED -Isrc -Wall"
 mkdir -p build/obj
 n=0
-for f in src/chain.c src/registry.c src/midi_mvave.c src/blocks/*.c; do
+for f in src/chain.c src/registry.c src/midi_mvave.c src/app_alpha.c src/engine/a2l.c src/engine/ir.c src/blocks/*.c; do
   "$CLANG" $FLAGS -c "$f" -o "build/obj/$(basename "${f%.c}").o"
   echo "  ✓ $f"; n=$((n+1))
 done

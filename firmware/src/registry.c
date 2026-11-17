@@ -21,9 +21,10 @@ const tf_block_desc *tf_block_find(const char *id) {
 }
 
 /* Built-in blocks (extern descriptors from the blocks directory). Add here. */
-extern const tf_block_desc TF_EQ_PARAM, TF_DELAY_DIGITAL, TF_DRIVE_SOFT;
+extern const tf_block_desc TF_EQ_PARAM, TF_DELAY_DIGITAL, TF_DRIVE_SOFT, TF_GATE;
 
 void tf_blocks_register_all(void) {
+    tf_block_register(&TF_GATE);
     tf_block_register(&TF_DRIVE_SOFT);
     tf_block_register(&TF_EQ_PARAM);
     tf_block_register(&TF_DELAY_DIGITAL);
