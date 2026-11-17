@@ -1,0 +1,27 @@
+{
+  "name": "tankfree-app",
+  "productName": "TankFree",
+  "version": "0.1.0",
+  "description": "TankFree desktop rig editor (Electron wrapper around manager/)",
+  "main": "main.js",
+  "author": "TankFree",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "copy": "node copy.js",
+    "start": "npm run copy && electron .",
+    "dist": "npm run copy && electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "app.tankfree.editor",
+    "productName": "TankFree",
+    "files": ["main.js", "renderer/**/*", "package.json"],
+    "directories": { "output": "dist" },
+    "mac": { "target": ["dmg", "zip"], "category": "public.app-category.music" },
+    "win": { "target": ["nsis", "portable"] },
+    "linux": { "target": ["AppImage"] }
+  }
+}

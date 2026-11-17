@@ -1,0 +1,40 @@
+name: Build desktop app
+# Builds the TankFree Electron app for macOS and Windows.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --registry https://registry.npmjs.org/
+      - run: npm run dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TankFree-app-${{ matrix.os }}
+          path: |
+            app/dist/*.dmg
+            app/dist/*.zip
+            app/dist/*.exe
+            app/dist/*.AppImage
+          if-no-files-found: ignore
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/dist/*.dmg
+            app/dist/*.exe

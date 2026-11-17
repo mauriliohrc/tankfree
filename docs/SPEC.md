@@ -73,8 +73,15 @@ Living spec. Decisions marked ✅; open items marked ❓.
 - ✅ Tuner (chromatic).
 
 ## Connectivity
-- ✅ USB: Web-Serial control (editor) + USB-MIDI (GP-5 map). ❓ USB audio? (UltraRig dropped it.)
+- ✅ USB: **composite device** — CDC serial (editor control) + USB-MIDI (GP-5 map)
+  + **USB Audio Class (native soundcard)**. The factory firmware exposed USB audio
+  (24-bit); UltraRig dropped it. We keep it: the JieLi AC79 SDK supports UAC, so a
+  composite CDC+MIDI+UAC descriptor gives recording + reamp over USB. Tradeoff:
+  UAC adds CPU + USB bandwidth and competes with the DSP budget; gate behind a
+  setting and measure. ❓ channel count (stereo in/out) + reamp routing TBD.
 - ✅ BLE: control app + BLE-MIDI.
+- ✅ Desktop app: Electron wrapper (`app/`) around the web editor — native Mac/Win
+  app with Web Serial (system webviews don't support Web Serial, so Electron, not Tauri).
 
 ## Flash & RAM budget
 - App area `[0x4000, 0x7B000)` = 487 KB for code+data. Presets/captures/IR in VM +

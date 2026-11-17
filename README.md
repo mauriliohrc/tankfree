@@ -53,6 +53,18 @@ are right there. macOS and Windows; both binaries are built automatically by CI.
 | [`firmware/`](firmware/) | The on-pedal app (pi32v2, JieLi AC79 SDK). | skeleton 🧪 |
 | [`docs/`](docs/) | Reverse-engineering notes, firmware spec, GP-5 MIDI map. | ✅ |
 
+## Status & roadmap
+
+Full checklist in **[`ROADMAP.md`](ROADMAP.md)** (renders as a live task list). In short:
+
+- ✅ **Reverse engineering** — hardware, crypto, protocol, formats, factory tones; all confirmed on a live pedal.
+- ✅ **Tooling** — `jltech` crypto, `fwtool`, `tankctl` (edit a live pedal from the terminal), one-click installer GUI.
+- ✅ **Editor** — QC-grid + ToneX-realism, demo mode, reads a real pedal (presets/captures/IRs/meters); also a native **desktop app** (`app/`, Electron).
+- 🚧 **Live editing in the UI**, **Electron packaging**, **flasher backend**.
+- ⬜ **Our firmware** (the big track): SDK/toolchain → booting fw → audio → engine → flash & configure end-to-end.
+
+Can I use it today? Configure a pedal over serial ✅ · flash *our* firmware ⬜ (Phase 3).
+
 ## Features (target)
 
 - **Audio** 48 kHz / 24-bit (user-selectable 96 kHz), no internal resample.

@@ -16,6 +16,11 @@ backups/
 flashdump*/
 chip_key*.bin
 
+# ─── Electron app (generated / installed) ───
+app/node_modules/
+app/renderer/
+app/dist/
+
 # ─── Build / scratch ───
 __pycache__/
 *.pyc
