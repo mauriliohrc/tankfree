@@ -35,11 +35,20 @@ circuit. Drag blocks to reorder, dial in a tone, map the footswitches.
 > Try it now — no pedal needed: `cd manager && python3 -m http.server 8000`, open
 > <http://localhost:8000> in Chrome/Edge. It runs in demo mode until a pedal is connected.
 
+## One-click install
+
+<p align="center"><img src="docs/img/installer.png" alt="TankFree Installer — backup, install, and restore in one window" width="86%"></p>
+
+Download the installer for your system from [Releases](../../releases), **double-click,
+done** — nothing to install. It **backs up your pedal first**, writes TankFree, and
+verifies. Buttons to **go back to your backup** or **restore M-VAVE factory firmware**
+are right there. macOS and Windows; both binaries are built automatically by CI.
+
 ## What's inside
 
 | Folder | What it is | Status |
 |---|---|---|
-| [`installer/`](installer/) | Python flasher + offline firmware tools (decrypt/encrypt/extract). Validated JieLi crypto. | crypto ✅ · flashing 🚧 |
+| [`installer/`](installer/) | One-click GUI installer (macOS/Windows, zero deps) + offline firmware tools. Validated JieLi crypto. | GUI ✅ · crypto ✅ · flashing 🚧 |
 | [`manager/`](manager/) | Web editor — Web Serial + Web MIDI (Valeton **GP-5**-style map) + BLE. QC-style grid, ToneX-style block art, presets, captures, IRs. | editor ✅ · live data 🚧 |
 | [`firmware/`](firmware/) | The on-pedal app (pi32v2, JieLi AC79 SDK). | skeleton 🧪 |
 | [`docs/`](docs/) | Reverse-engineering notes, firmware spec, GP-5 MIDI map. | ✅ |

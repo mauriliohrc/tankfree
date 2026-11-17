@@ -1,0 +1,50 @@
+name: Build installers
+# Builds the double-click installer for macOS and Windows automatically.
+# Run manually (Actions → Run workflow) or on a version tag (v*). Binaries are
+# uploaded as artifacts, and attached to the GitHub Release when triggered by a tag.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            out: TankFree-Installer.app
+            pack: cd dist && zip -r ../TankFree-Installer-macOS.zip TankFree-Installer.app && cd ..
+            asset: TankFree-Installer-macOS.zip
+          - os: windows-latest
+            out: TankFree-Installer.exe
+            pack: echo packaged
+            asset: dist/TankFree-Installer.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PyInstaller
+        run: python -m pip install pyinstaller
+      - name: Build
+        run: >
+          python -m PyInstaller --noconfirm --clean --windowed --onefile
+          --name "TankFree-Installer" --paths installer
+          --hidden-import flasher --hidden-import jltech
+          --hidden-import jltech.cipher --hidden-import jltech.crc
+          installer/gui/tankfree_installer.py
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: ${{ matrix.pack }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset == 'dist/TankFree-Installer.exe' && 'TankFree-Installer-Windows' || 'TankFree-Installer-macOS' }}
+          path: ${{ matrix.asset }}
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.asset }}
