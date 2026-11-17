@@ -42,6 +42,25 @@ Same commands over any transport (SCSI there, HID here). CDB = `cmd(2,BE)+args`,
   `FLASH_ID 0xFC00`, `GET_ONLINE 0xFC0B`, `SELECT_FLASH 0xFC0C`, `READ_FLASH 0xFD01`.
   WRITE_FLASH args = `addr(4,BE)+len(2,BE)+00+crc16(data,LE)` then data out.
 
+## HID request framing — RE'd from Gt::request (no flash needed)
+The HID output report M-UPGRADE sends (before the 64-byte reply):
+```
+"SBU2" (4)              magic (Recovery::request writes it over the front)
+cmd      u32 LE (4)     command (Recovery validates cmd ∈ 1..5)
+arg1     u32 LE (4)     e.g. address/offset
+arg2     u32 LE (4)     e.g. length/param
+datalen  u16 LE (2)
+0x0000           (2)
+crc32    u32    (4)     CRC-32 (poly 0x04C11DB7) over `data`
+data     datalen bytes  (≤ 4096)
+```
+Reply = fixed 64-byte HID input report, parsed by `Recovery::response`. This is
+M-UPGRADE's own "Gt" protocol over HID (above the M-VAVE OTA loader) — NOT the
+jl-uboot-tool CDB set. Still unknown: the **cmd numbers** (1..5 = read/write/erase/…),
+the reply layout, the **enter-OTA trigger** (MIDI `enter-upgrade`), and the
+`Recovery::install` **chipkey callback**. These come from a `recovery.request` capture
+(blocked while the pedal is current) or deeper disassembly.
+
 ## Still to confirm (for mac_flash.py option B)
 1. The **inner `Gt::request` byte layout** (how cmd/offset/len/data pack after "SBU2")
    — from deeper disassembly, or from a **`recovery.request`/`reply` trace** during a
