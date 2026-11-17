@@ -19,8 +19,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build & run the DSP block-engine host test
         run: |
-          cc -Ifirmware/src -O2 -Wall firmware/test/host_test.c \
-             firmware/src/registry.c firmware/src/chain.c \
-             firmware/src/blocks/eq_param.c firmware/src/blocks/delay_digital.c \
-             firmware/src/blocks/drive_soft.c -lm -o /tmp/host_test
+          BLOCKS="firmware/src/registry.c firmware/src/chain.c firmware/src/blocks/eq_param.c firmware/src/blocks/delay_digital.c firmware/src/blocks/drive_soft.c"
+          cc -Ifirmware/src -O2 -Wall firmware/test/host_test.c $BLOCKS -lm -o /tmp/host_test
           /tmp/host_test
+          cc -Ifirmware/src -O2 -Wall firmware/test/proto_test.c firmware/src/proto.c $BLOCKS -lm -o /tmp/proto_test
+          /tmp/proto_test
