@@ -45,3 +45,6 @@ firmware/build/obj/
 firmware/.toolchain/
 !firmware/build/*.sh
 !firmware/build/*.md
+
+# downloaded JieLi SDK (1GB; clone via firmware/sdk/README.md)
+firmware/sdk/fw-AC79_AIoT_SDK/
