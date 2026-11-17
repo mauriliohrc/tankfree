@@ -48,3 +48,5 @@ firmware/.toolchain/
 
 # downloaded JieLi SDK (1GB; clone via firmware/sdk/README.md)
 firmware/sdk/fw-AC79_AIoT_SDK/
+installer/tankfree.bin
+installer/.tankfree_demo.bin
