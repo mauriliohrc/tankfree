@@ -1,10 +1,35 @@
-# Flashing & building on a Mac (no Windows)
+# Flashing & building on a Mac
 
-Honest constraint: the JieLi loader tooling (`jl-uboot-tool`) and the pi32v2
-toolchain run on **Linux/Windows, not macOS**. And the cross-platform **USB-MIDI
-OTA** flash path needs the pedal to expose MIDI — which **UltraRig doesn't** (it's
-serial-only). So on a Mac we run the Linux parts in a **free Linux VM with USB
-passthrough**. Everything else (editor, `tankctl`, host builds) stays native.
+## ★ Breakthrough: Mac-native flashing is possible (JieLi HID OTA)
+`jl-uboot-tool` is Linux/Windows only because it uses the loader's **SCSI
+(mass-storage)** transport. But JieLi's loader **also speaks USB HID**, and
+**M-VAVE's own `M-UPGRADE.app` flashes the Tank-G on macOS** through it — proven by
+reverse-engineering its native `upgrade_core` (links `CoreMIDI` + `IOKit`):
+
+- **`Recovery` / `JieliHidOta`** — USB **HID OTA**, 64-byte in/out reports, via IOKit.
+  Symbols: `Recovery::{scan,open,install,compatible,inspect}`,
+  `MacConnection::{synchronize,transact,query}`,
+  `JieliHidOta::{isDevicePresent,upgradeFirmware,protocolSelfTest}`.
+  `Recovery::install(firmware, chipkey_cb → array<u32,16>, progress)` = the write.
+- **USB-MIDI SysEx** — identity handshake + `enter-upgrade` (for devices that
+  expose MIDI, i.e. factory firmware).
+- The pedal (on UltraRig) enumerates as VID **`0x3654`** / PID **`0x5155`**, "Jieli Technology".
+
+**Implication:** a **Python `hidapi` flasher on macOS** can replicate `Recovery`
+(64-byte HID reports wrapping the same loader commands jl-uboot-tool already
+implements over SCSI) → **flash our firmware on the Mac, no Windows, no VM.**
+The loader *commands* are known (jltech/uboot.py); we still need the **HID framing**
+(from `upgrade_core` disassembly or by capturing M-UPGRADE's live traffic) and the
+**entry method** (how the device reaches HID-OTA mode).
+
+> Open question to pin down: how M-UPGRADE enters flash mode from each state
+> (factory MIDI `enter-upgrade` → HID OTA; vs the mask-ROM UBOOT). From UltraRig
+> (serial, no MIDI) we can reach mask-ROM UBOOT via its `UBOOT` serial command —
+> check whether that mask-ROM also exposes the HID interface M-UPGRADE talks to.
+
+## Fallback: a Linux VM (if the HID path needs more RE)
+If the HID OTA RE stalls, run `jl-uboot-tool` + the toolchain in a free Linux VM
+(UTM/Lima) with USB passthrough — both flashing and building, still Mac-only.
 
 ## One-time: a Linux VM on your Mac with USB passthrough
 Use **UTM** (free, App Store / mac.getutm.app) or **Lima**. In the VM:
