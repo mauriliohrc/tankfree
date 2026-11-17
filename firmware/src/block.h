@@ -36,7 +36,7 @@ typedef enum {
 typedef struct {
     const char *id;                 /* "eq.graphic", "amp.brit800", "dly.digital" */
     tf_category category;
-    uint16_t    state_bytes;        /* heap needed for one instance */
+    uint32_t    state_bytes;        /* heap needed for one instance (delay lines are big) */
     uint16_t    cpu_cost;           /* relative units at 48 kHz (budget meter) */
     /* lifecycle */
     void  (*init)(tf_block *b, float fs);

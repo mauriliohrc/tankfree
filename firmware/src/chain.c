@@ -5,11 +5,12 @@
 #include <string.h>
 
 uint16_t TF_CPU_BUDGET = 1000;     /* relative units; set at boot from clock */
-uint32_t TF_MEM_BUDGET = 200 * 1024;
+uint32_t TF_MEM_BUDGET = 512 * 1024;
 
-/* Minimal static instance pool (replace with SDK heap / effects arena). */
+/* Instance state pool = the effects arena (placeholder; wire to the SDK's
+ * effects RAM region on-device, which bounds total delay/reverb memory). */
 static tf_block  g_blocks[TF_CHAIN_MAX];
-static uint8_t   g_state[64 * 1024];
+static uint8_t   g_state[512 * 1024];
 static uint32_t  g_state_used;
 static uint8_t   g_used_mask;
 
@@ -20,13 +21,12 @@ void tf_chain_init(tf_chain *c, float fs) {
 }
 
 static tf_block *alloc_block(const tf_block_desc *d, float fs) {
-    for (int i = 0; i < TF_CHAIN_MAX; i++) {
-        if (!(g_used_mask & 0)) {}
-    }
     if (g_state_used + d->state_bytes > sizeof(g_state)) return NULL;
-    /* find a free slot */
-    static int next;
-    tf_block *b = &g_blocks[next++ % TF_CHAIN_MAX];
+    int slot = -1;
+    for (int i = 0; i < TF_CHAIN_MAX; i++)
+        if (!(g_used_mask & (1u << (i & 7))) && !g_blocks[i].desc) { slot = i; break; }
+    if (slot < 0) return NULL;
+    tf_block *b = &g_blocks[slot];
     b->desc = d;
     b->state = &g_state[g_state_used]; g_state_used += d->state_bytes;
     b->fs = fs; b->enabled = 1;
@@ -53,6 +53,7 @@ void tf_chain_remove(tf_chain *c, int pos) {
     if (pos < 0 || pos >= c->nblocks) return;
     tf_block *b = c->blocks[pos];
     c->cpu_used -= b->desc->cpu_cost; c->mem_used -= b->desc->state_bytes;
+    b->desc = NULL;                 /* free the pool slot (state pool is bump-only) */
     for (int i = pos; i < c->nblocks - 1; i++) c->blocks[i] = c->blocks[i+1];
     c->nblocks--;
 }
