@@ -229,6 +229,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
         <div class="bar"><div class="fill" id="memFill" style="width:31%"></div></div></div>
       <button class="iconbtn" id="tunerBtn" title="Afinador" aria-label="Afinador">♪</button>
       <button class="chip" id="connBtn"><span class="dot"></span><span id="connTxt">Conectar</span></button>
+      <button class="iconbtn" id="upBtn" title="Capturas & IRs" aria-label="Upload de capturas e IRs">📥</button>
       <button class="iconbtn" id="setBtn" title="Ajustes" aria-label="Ajustes">⚙</button>
     </div>
   </header>
@@ -267,6 +268,30 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 <div class="scrim" id="scrim"></div>
 <aside class="drawer left" id="presetDrawer"><h3>PRESETS</h3><div class="plist" id="plist"></div></aside>
 <aside class="drawer right" id="setDrawer"><h3>AJUSTES</h3><div id="settings"></div></aside>
+<aside class="drawer right" id="upDrawer"><h3>CAPTURAS &amp; IRs</h3>
+  <div class="panel" style="margin-bottom:14px">
+    <h3>Capturas NAM (.nam)</h3>
+    <p class="hint">A2-Lite 48 kHz. A conversão roda no navegador; a captura vai pro pedal por USB.</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <select id="namSlot"></select>
+      <label class="seg"><input type="file" id="namFile" accept=".nam,application/json" style="display:none"><span style="padding:7px 12px;cursor:pointer">Escolher .nam…</span></label>
+    </div>
+    <div id="namName" class="hint" style="margin-top:6px"></div>
+    <button id="namUp" style="margin-top:8px;width:100%;opacity:.5" disabled>Enviar captura</button>
+  </div>
+  <div class="panel">
+    <h3>Cabinet IRs (.wav)</h3>
+    <p class="hint">WAV mono 48 kHz, até 85 ms. Sem latência extra.</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <select id="irSlot"></select>
+      <label class="seg"><input type="file" id="irFile" accept=".wav,audio/wav" style="display:none"><span style="padding:7px 12px;cursor:pointer">Escolher .wav…</span></label>
+    </div>
+    <div id="irName" class="hint" style="margin-top:6px"></div>
+    <button id="irUp" style="margin-top:8px;width:100%;opacity:.5" disabled>Enviar IR</button>
+  </div>
+  <div class="bar" style="margin-top:14px"><div class="fill" id="upFill" style="width:0"></div></div>
+  <div id="upStatus" class="hint" style="margin-top:8px"></div>
+</aside>
 
 <div class="picker" id="picker"><div class="box">
   <div class="cats" id="pickCats"></div>
@@ -761,6 +786,54 @@ $('pPrev').onclick=()=>loadPreset(presetIdx-1);
 $('pNext').onclick=()=>loadPreset(presetIdx+1);
 $('pName').onclick=()=>{renderPresetDrawer();openDrawer('presetDrawer');};
 $('setBtn').onclick=()=>{renderSettings();openDrawer('setDrawer');};
+
+/* ======== upload de capturas (.nam) e IRs (.wav) ======== */
+(function(){
+  const slots=(sel,n)=>{for(let i=0;i<n;i++){const o=document.createElement('option');o.value=i;o.textContent='Slot '+(i+1);sel.appendChild(o);}};
+  slots($('namSlot'),15); slots($('irSlot'),8);
+  let namText=null, irTaps=null, irFileName='';
+  $('upBtn').onclick=()=>openDrawer('upDrawer');
+  function decodeWavIR(ab){
+    const dv=new DataView(ab);
+    if(dv.getUint32(0,false)!==0x52494646||dv.getUint32(8,false)!==0x57415645) throw new Error('não é WAV');
+    let off=12,fmt=null,dOff=0,dLen=0;
+    while(off+8<=dv.byteLength){const id=dv.getUint32(off,false),sz=dv.getUint32(off+4,true);
+      if(id===0x666d7420)fmt={af:dv.getUint16(off+8,true),ch:dv.getUint16(off+10,true),rate:dv.getUint32(off+12,true),bits:dv.getUint16(off+22,true)};
+      else if(id===0x64617461){dOff=off+8;dLen=sz;} off+=8+sz+(sz&1);}
+    if(!fmt||!dOff) throw new Error('WAV sem fmt/data');
+    if(fmt.rate!==48000) throw new Error('IR é '+fmt.rate+' Hz; o pedal roda 48 kHz');
+    const bs=fmt.bits/8, frames=Math.floor(dLen/(fmt.ch*bs)), taps=new Float32Array(Math.min(frames,4096));
+    for(let i=0;i<taps.length;i++){const p=dOff+i*fmt.ch*bs;
+      if(fmt.af===3&&fmt.bits===32)taps[i]=dv.getFloat32(p,true);
+      else if(fmt.bits===16)taps[i]=dv.getInt16(p,true)/32768;
+      else if(fmt.bits===24){const v=dv.getUint8(p)|(dv.getUint8(p+1)<<8)|(dv.getInt8(p+2)<<16);taps[i]=v/8388608;}
+      else throw new Error('profundidade WAV não suportada');}
+    return taps;
+  }
+  $('namFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    try{namText=await f.text();JSON.parse(namText);$('namName').textContent=f.name+' ✓';$('namUp').disabled=false;$('namUp').style.opacity=1;}
+    catch{$('namName').textContent='arquivo inválido (.nam é JSON)';}};
+  $('irFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    try{irTaps=decodeWavIR(await f.arrayBuffer());irFileName=f.name.replace(/\.wav$/i,'');$('irName').textContent=f.name+' — '+irTaps.length+' taps ('+(irTaps.length/48).toFixed(0)+' ms) ✓';$('irUp').disabled=false;$('irUp').style.opacity=1;}
+    catch(err){$('irName').textContent=err.message;}};
+  const setProg=(f,t)=>{$('upFill').style.width=(f*100)+'%';$('upStatus').textContent=t;};
+  $('irUp').onclick=async ()=>{
+    if(!irTaps)return;
+    if(devMode!=='usb'){toast('Conecte o pedal pra enviar');return;}
+    setProg(0,'Enviando IR…');
+    const slot=+$('irSlot').value, buf=new Int16Array(irTaps.length);
+    for(let i=0;i<irTaps.length;i++)buf[i]=Math.max(-32768,Math.min(32767,Math.round(irTaps[i]*32767)));
+    await send(`IRBEGIN ${slot} ${buf.length} '${irFileName}'`);
+    for(let i=0;i<buf.length;i+=256){let hex='';for(const v of buf.subarray(i,i+256))hex+=(v&0xffff).toString(16).padStart(4,'0');await send('IRB '+hex);setProg(Math.min(1,(i+256)/buf.length),'Enviando IR…');}
+    await send(`IREND ${slot}`); setProg(1,'IR enviada ✓'); toast('IR enviada pro slot '+(slot+1));
+  };
+  $('namUp').onclick=()=>{
+    if(!namText)return;
+    // conversão NAM→A2L1 clean-room está em validação junto com o runner a2l.c do firmware.
+    setProg(0,'Conversor NAM em validação — IR já funciona 100%. (A captura entra assim que o runner a2l.c for validado.)');
+    toast('Upload de IR já funciona; NAM entra com a validação do runner');
+  };
+})();
 $('connBtn').onclick=connect;
 $('tunerBtn').onclick=openTuner;$('tClose').onclick=closeTuner;
 $('onboardOk').onclick=()=>$('onboard').style.display='none';
